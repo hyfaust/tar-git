@@ -3,3 +3,7 @@
 *.bak*
 *.tmp
 ~$*
+test
+_test_*/
+__pycache__/
+*.pyc

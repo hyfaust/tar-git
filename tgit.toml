@@ -1,0 +1,41 @@
+# tgit example configuration
+# Place this file as tgit.toml in your working directory.
+
+# ── Archive formats ──────────────────────────────────────────────────────────
+# Each [compression.<suffix>] block defines how to extract and pack a format.
+# Placeholders: {src} = source path, {dst} = destination path,
+#               {name} = file stem, {suffix} = extension
+
+# .docx (built-in, no external tools needed)
+# [compression.docx]
+# extract_cmd = ["python", "-c", "...", "{src}", "{dst}"]
+# pack_cmd    = ["python", "-c", "...", "{src}", "{dst}"]
+# extract_to  = "{name}_{suffix}"
+
+# .tar
+# [compression.tar]
+# extract_cmd = ["tar", "xf", "{src}", "-C", "{dst}"]
+# pack_cmd    = ["tar", "cf", "{dst}", "-C", "{src}", "."]
+
+# .tar.gz
+# [compression.tar.gz]
+# extract_cmd = ["tar", "xzf", "{src}", "-C", "{dst}"]
+# pack_cmd    = ["tar", "czf", "{dst}", "-C", "{src}", "."]
+
+# .zip
+# [compression.zip]
+# extract_cmd = ["unzip", "-o", "{src}", "-d", "{dst}"]
+# pack_cmd    = ["zip", "-r", "{dst}", "."]
+
+# ── Custom diff tools ────────────────────────────────────────────────────────
+# Each [diff.<suffix>] block defines how to diff files of that type.
+# Placeholders: {old} = old file path, {new} = new file path
+
+# [diff.docx]
+# cmd = ["python", "word_diff.py", "{old}", "{new}"]
+# or:
+# script = "word_diff.py"
+
+# ── General settings ─────────────────────────────────────────────────────────
+# [tgit]
+# autosave_interval = 300   # seconds between daemon checks
