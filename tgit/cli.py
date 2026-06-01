@@ -201,6 +201,22 @@ def _git_passthrough(args: List[str]) -> int:
         return 1
 
 
+def _copy_templates(working_dir: Path) -> None:
+    """Copy template config files from tgit project to working directory."""
+    import shutil
+
+    # tgit project root is one level up from the tgit package
+    project_root = Path(__file__).parent.parent
+
+    templates = [".tgitignore", "tgit.toml"]
+    for name in templates:
+        src = project_root / name
+        dst = working_dir / name
+        if src.exists() and not dst.exists():
+            shutil.copy2(str(src), str(dst))
+            print_info(f"Created {name} from template")
+
+
 # ── Command implementations ──────────────────────────────────────────────────
 
 def _cmd_init(
@@ -213,6 +229,9 @@ def _cmd_init(
     print_step("Initialising tgit repository …")
 
     processor._ensure_staging()
+
+    # Copy template config files from tgit project to working directory
+    _copy_templates(git.working_dir)
 
     # Init git repo inside staging
     if not git.is_repo():
@@ -238,6 +257,9 @@ def _cmd_init(
             import shutil
             shutil.copy2(str(src), str(dst))
 
+    # Generate hashes before commit so hashes.json is included
+    awareness.update_hashes(scanner)
+
     # Initial commit
     run_git_local(["add", "-A"], cwd=str(git.staging_dir))
     r = run_git_local(
@@ -248,7 +270,6 @@ def _cmd_init(
         print_ok("Initial commit created")
 
     git.create_version_tag(major="1")
-    awareness.update_hashes(scanner)
     print_ok("tgit repository initialised")
     return True
 
@@ -302,9 +323,11 @@ def _cmd_commit(
             parts.append(f"deleted {len(deleted)}")
         message = f"tgit: {', '.join(parts)}"
 
+    # Update hashes before commit so hashes.json is included
+    awareness.update_hashes(scanner)
+
     ok = git.commit(message)
     if ok:
-        awareness.update_hashes(scanner)
         if not no_tag:
             git.create_version_tag(major=tag_major)
     return ok

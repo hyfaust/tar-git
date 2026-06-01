@@ -12,6 +12,18 @@
 # pack_cmd    = ["python", "-c", "...", "{src}", "{dst}"]
 # extract_to  = "{name}_{suffix}"
 
+# .xlsx (Excel, zip-based — uses Python zipfile)
+# [compression.xlsx]
+# extract_cmd = ["python", "-c", "import zipfile,sys,os; s,d=sys.argv[1],sys.argv[2]; os.makedirs(d,exist_ok=True); zipfile.ZipFile(s).extractall(d)", "{src}", "{dst}"]
+# pack_cmd    = ["python", "-c", "import zipfile,sys,os; s,d=sys.argv[1],sys.argv[2]; z=zipfile.ZipFile(d,'w',zipfile.ZIP_DEFLATED); [z.write(os.path.join(r,f),os.path.relpath(os.path.join(r,f),s)) for r,_,fs in os.walk(s) for f in fs]; z.close()", "{src}", "{dst}"]
+# extract_to  = "{name}_{suffix}"
+
+# .pptx (PowerPoint, zip-based — uses Python zipfile)
+# [compression.pptx]
+# extract_cmd = ["python", "-c", "import zipfile,sys,os; s,d=sys.argv[1],sys.argv[2]; os.makedirs(d,exist_ok=True); zipfile.ZipFile(s).extractall(d)", "{src}", "{dst}"]
+# pack_cmd    = ["python", "-c", "import zipfile,sys,os; s,d=sys.argv[1],sys.argv[2]; z=zipfile.ZipFile(d,'w',zipfile.ZIP_DEFLATED); [z.write(os.path.join(r,f),os.path.relpath(os.path.join(r,f),s)) for r,_,fs in os.walk(s) for f in fs]; z.close()", "{src}", "{dst}"]
+# extract_to  = "{name}_{suffix}"
+
 # .tar
 # [compression.tar]
 # extract_cmd = ["tar", "xf", "{src}", "-C", "{dst}"]

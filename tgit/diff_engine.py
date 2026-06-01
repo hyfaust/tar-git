@@ -290,7 +290,7 @@ class DiffEngine:
         staging = self.processor.staging_path(node)
         rel = staging.relative_to(self.git.staging_dir)
         r = run_git(
-            ["show", f"HEAD:{rel.as_posix()}"],
+            ["ls-tree", "-r", f"HEAD:{rel.as_posix()}"],
             cwd=str(self.git.staging_dir),
         )
         if r.returncode != 0:
@@ -300,10 +300,8 @@ class DiffEngine:
         head_dir = Path(td) / "head"
         head_dir.mkdir(parents=True, exist_ok=True)
 
-        # Write git show output as directory tree
-        self._restore_tree(r.stdout, str(head_dir))
+        self._restore_from_ls_tree(r.stdout, str(head_dir), str(self.git.staging_dir))
 
-        # Pack into a temp archive file
         comp = self.config.get_compression(node.suffix)
         if not comp:
             shutil.rmtree(td, ignore_errors=True)
@@ -328,7 +326,7 @@ class DiffEngine:
         staging = self.processor.staging_path(node)
         rel = staging.relative_to(self.git.staging_dir)
         r = run_git(
-            ["show", f"{version}:{rel.as_posix()}"],
+            ["ls-tree", "-r", f"{version}:{rel.as_posix()}"],
             cwd=str(self.git.staging_dir),
         )
         if r.returncode != 0:
@@ -337,7 +335,7 @@ class DiffEngine:
         td = tempfile.mkdtemp(prefix="tgit_diff_")
         ver_dir = Path(td) / "ver"
         ver_dir.mkdir(parents=True, exist_ok=True)
-        self._restore_tree(r.stdout, str(ver_dir))
+        self._restore_from_ls_tree(r.stdout, str(ver_dir), str(self.git.staging_dir))
 
         comp = self.config.get_compression(node.suffix)
         if not comp:
@@ -359,8 +357,8 @@ class DiffEngine:
         return None
 
     @staticmethod
-    def _restore_tree(data: str, base_dir: str) -> None:
-        """Parse ``git show`` tree output and recreate directories."""
+    def _restore_tree(data: str, base_dir: str, cwd: Optional[str] = None) -> None:
+        """Parse ``git show`` tree output and recreate directories and files."""
         for line in data.splitlines():
             line = line.strip()
             if not line or line.startswith("warning:"):
@@ -372,6 +370,42 @@ class DiffEngine:
             fpath = Path(base_dir) / name
             if line.startswith("040000"):
                 fpath.mkdir(parents=True, exist_ok=True)
+            elif line.startswith("100") and len(parts) >= 3:
+                blob_hash = parts[2]
+                try:
+                    r = subprocess.run(
+                        ["git", "show", blob_hash],
+                        cwd=cwd, capture_output=True, timeout=30,
+                    )
+                    if r.returncode == 0:
+                        fpath.parent.mkdir(parents=True, exist_ok=True)
+                        fpath.write_bytes(r.stdout)
+                except Exception:
+                    pass
+
+    @staticmethod
+    def _restore_from_ls_tree(data: str, base_dir: str, cwd: str) -> None:
+        """Parse ``git ls-tree -r`` output and recreate all files."""
+        for line in data.splitlines():
+            line = line.strip()
+            if not line or line.startswith("warning:"):
+                continue
+            parts = line.split(None, 3)
+            if len(parts) < 4:
+                continue
+            blob_hash = parts[2]
+            rel_path = parts[3]
+            fpath = Path(base_dir) / rel_path
+            fpath.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                r = subprocess.run(
+                    ["git", "show", blob_hash],
+                    cwd=cwd, capture_output=True, timeout=30,
+                )
+                if r.returncode == 0:
+                    fpath.write_bytes(r.stdout)
+            except Exception:
+                pass
 
     # ── Internal: helpers ────────────────────────────────────────────────
 
