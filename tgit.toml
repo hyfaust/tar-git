@@ -1,0 +1,63 @@
+# tgit configuration
+# Place this file as tgit.toml in your working directory.
+
+# ── Archive formats ──────────────────────────────────────────────────────────
+# Each [compression.<suffix>] block defines how to extract and pack a format.
+# Placeholders:
+#   {src}       source path (archive file for extract, dir for pack)
+#   {dst}       destination path (dir for extract, archive file for pack)
+#   {name}      file stem (e.g. "test" from "test.tar")
+#   {suffix}    extension (e.g. "tar")
+#   {src_name}  full source filename (e.g. "test.tar")
+#
+# extract_to: naming template for the extracted directory.
+#   Default "{name}_{suffix}" means test.tar → test_tar/
+#   Available placeholders: {name}, {suffix}, {src_name}
+#   On Windows, {src_name} (e.g. test.docx/) conflicts with the archive file.
+
+# .docx (built-in, no external tools needed)
+# [compression.docx]
+# extract_cmd = ["python", "-c", "...", "{src}", "{dst}"]
+# pack_cmd    = ["python", "-c", "...", "{src}", "{dst}"]
+# extract_to  = "{src_name}"
+
+# .xlsx (Excel, zip-based — uses Python zipfile)
+# [compression.xlsx]
+# extract_cmd = ["python", "-c", "import zipfile,sys,os; s,d=sys.argv[1],sys.argv[2]; os.makedirs(d,exist_ok=True); zipfile.ZipFile(s).extractall(d)", "{src}", "{dst}"]
+# pack_cmd    = ["python", "-c", "import zipfile,sys,os; s,d=sys.argv[1],sys.argv[2]; z=zipfile.ZipFile(d,'w',zipfile.ZIP_DEFLATED); [z.write(os.path.join(r,f),os.path.relpath(os.path.join(r,f),s)) for r,_,fs in os.walk(s) for f in fs]; z.close()", "{src}", "{dst}"]
+# extract_to  = "{src_name}"
+
+# .pptx (PowerPoint, zip-based — uses Python zipfile)
+# [compression.pptx]
+# extract_cmd = ["python", "-c", "import zipfile,sys,os; s,d=sys.argv[1],sys.argv[2]; os.makedirs(d,exist_ok=True); zipfile.ZipFile(s).extractall(d)", "{src}", "{dst}"]
+# pack_cmd    = ["python", "-c", "import zipfile,sys,os; s,d=sys.argv[1],sys.argv[2]; z=zipfile.ZipFile(d,'w',zipfile.ZIP_DEFLATED); [z.write(os.path.join(r,f),os.path.relpath(os.path.join(r,f),s)) for r,_,fs in os.walk(s) for f in fs]; z.close()", "{src}", "{dst}"]
+# extract_to  = "{src_name}"
+
+# .tar
+# [compression.tar]
+# extract_cmd = ["tar", "xf", "{src}", "-C", "{dst}"]
+# pack_cmd    = ["tar", "cf", "{dst}", "-C", "{src}", "."]
+
+# .tar.gz
+# [compression.tar.gz]
+# extract_cmd = ["tar", "xzf", "{src}", "-C", "{dst}"]
+# pack_cmd    = ["tar", "czf", "{dst}", "-C", "{src}", "."]
+
+# .zip
+# [compression.zip]
+# extract_cmd = ["unzip", "-o", "{src}", "-d", "{dst}"]
+# pack_cmd    = ["zip", "-r", "{dst}", "."]
+
+# ── Custom diff tools ────────────────────────────────────────────────────────
+# Each [diff.<suffix>] block defines how to diff files of that type.
+# Placeholders: {old} = old file path, {new} = new file path
+
+# [diff.docx]
+# cmd = ["python", "word_diff.py", "{old}", "{new}"]
+# or:
+# script = "word_diff.py"
+
+# ── General settings ─────────────────────────────────────────────────────────
+# [tgit]
+# autosave_interval = 300   # seconds between daemon checks
+# gitignore_ignore = ["*.bak", "*.tmp", "~$*"]  # extra patterns for .gitignore
