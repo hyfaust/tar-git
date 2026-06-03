@@ -1,0 +1,12 @@
+# tgit ignore rules (gitignore syntax)
+# Lines starting with # are comments.
+
+# Ignore backup and temp files
+*.bak
+*.bak*
+*.tmp
+~$*
+*.part
+
+# Ignore the tgit staging directory itself
+.tgit/
